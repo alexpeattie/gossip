@@ -1,0 +1,21 @@
+{
+  "name": "gossip",
+  "version": "1.0.0",
+  "description": "Gossip protocol implementation",
+  "main": "index.js",
+  "scripts": {
+    "test": "jasmine"
+  },
+  "author": "Alex Peattie",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^1.16.0",
+    "express": "^4.14.0",
+    "lodash": "^4.17.4",
+    "request": "^2.79.0",
+    "uuid": "^3.0.1"
+  },
+  "devDependencies": {
+    "jasmine": "^2.5.3"
+  }
+}
