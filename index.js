@@ -138,7 +138,7 @@ class Node {
 
 let socketServers = []
 let nodes = []
-_.range(0, 3).forEach(n => {
+_.range(0, numNodes).forEach(n => {
   let port = 3010 + n
   let app = express()
   app.use(bodyParser.json())
