@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Gossip chat app</title>
+    <meta name="description" content="Tachyons Component">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://unpkg.com/tachyons/css/tachyons.min.css">
+    <style>
+      input { border: none; border-width: 0; outline: 0; }
+      input:focus { border-color: pink !important; }
+      button { background: none; outline: 0; border: 0; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <div class="fl w-100 ph3 pv2 h5 overflow-y-scroll pb2 mb4" id='chats'>
+    </div>
+
+    <form class="black-80 ph3 pv2" id='postMessage'>
+      <div class="fl w-third pr4">
+        <label for="name" class="f6 b db mb2">Name:</label>
+        <input id="name" required type='text' name="name" class="db border-box hover-black w-100 measure bw1 b--dashed b--black-20 pv2 mb2 bl-0 br-0 bt-0 f6"></input>
+      </div>
+
+      <div class="fl w-two-thirds">
+        <label for="comment" class="f6 b db mb2">Message:</label>
+        <div class='flex'>
+          <input id="comment" autocomplete="off" required type='text' name="comment" class="db border-box hover-black w-100 measure bw1 b--dashed b--black-20 pv2 mb2 bl-0 br-0 bt-0 f6"></input>
+          <button class="f6 no-underline ba bw1 ph3 pv2 mb1 dib hot-pink ml2" type='submit'>Send</button>
+        </div>
+      </div>
+    </form>
+    <small id="add-node" class="ph3 f7 black-60"><a href="#" class="link underline black-80 hover-blue">+ Add a new node</a></small>
+
+    <template id='newChatTemplate'>
+      <dl class="f6 lh-title">
+        <dt class="dib b author"></dt>
+        <dd class="dib ml0 gray message"></dd>
+      </dl>
+    </template>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script>
+      $('#name').val(window.localStorage.getItem('name'))
+
+      function addMessage(message) {
+        if($('[data-message="' + message.MessageID + '"]').length) return
+
+        var newChat = $($('#newChatTemplate').html())
+        newChat.find('.author').text(message.Originator)
+        newChat.find('.message').text(message.Text)
+        newChat.attr('data-message', message.MessageID)
+        $('#chats').append(newChat)
+      }
+
+      $('#postMessage').on('submit', function(event) {
+        event.preventDefault()
+        event.stopImmediatePropagation()
+
+        var $msgBox = $(this).find('#comment')
+        var message = { Originator: $(this).find('#name').val(), Text: $msgBox.val() }
+
+        $.ajax({
+          type: 'POST',
+          url: '/message',
+          processData: false,
+          contentType: 'application/json',
+          data: JSON.stringify(message),
+          success: function(messageId) {
+            addMessage($.extend(messageId, message))
+            $msgBox.val('')
+          }
+        });
+      })
+
+      $('#name').on('keyup', function() {
+        window.localStorage.setItem('name', $(this).val())
+      })
+
+      $('#add-node').on('click', function(event) {
+        event.preventDefault()
+
+        var endpoint = prompt('Enter the node endpoint', 'http://')
+        $.ajax({
+          type: 'POST',
+          url: '/nodes',
+          processData: false,
+          contentType: 'application/json',
+          data: JSON.stringify({ endpoint: endpoint })
+        })
+      })
+
+      var ws = new WebSocket('ws://' + window.location.host)
+      ws.onmessage = function (event) {
+        var messages = JSON.parse(event.data)
+        if(messages.refresh) {
+          window.setTimeout(function() { window.location.reload() }, 1000)
+          return
+        }
+
+        $.each(messages, function(messageId) {
+          var message = messages[messageId]
+          addMessage(message)
+        })
+      }
+    </script>
+  </body>
+</html>
